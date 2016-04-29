@@ -13,66 +13,76 @@
 % Andreas Carlberger
 % 2016-01-29
 
+multipleruns = true;
+
+if ~multipleruns
+    runnedFiles = {};
+end
 try
-  
-  clear
-  clc
-  
-  % --- parameters ---
-  checkFreq = 10;
-  finTime = -1;   % in hours. -1 = inf
-  
-  % --- initiation ---
-  finTimeS = finTime*3600;
-  if finTime == -1
-    finTimeS = inf;
-  end
-  timeA = tic;
-  runTime = 0;
-  myName = prod(double('RemoteRunner.m'));
-  
-  originalDir = dir;
-  tmp = exist('Savings');
-  
-  if tmp ~= 7
-    mkdir('Savings')
-  end
-  
-  counter = 0;
-  while runTime < finTimeS
-    counter = counter+1;
-    fprintf('\n check nr: %d \n',counter)
-    
-    pause(checkFreq)
+
+%   clear
     clc
-    
-    directory = dir;
-    nFiles = length(directory);
-    
-    for ii = 1:nFiles
-      try
-        disp(directory(ii).name)
-        if directory(ii).isdir == 0 ...
-            && prod(double(directory(ii).name)) ~= myName
-          try
-            run(directory(ii).name)
-          catch
-            a = 1;
-          end
-        end
-      catch
-        a = 2;
-      end
-      close all
+
+    % --- parameters ---
+    checkFreq = 10;
+    finTime = -1;   % in hours. -1 = inf
+
+    % --- initiation ---
+    finTimeS = finTime*3600;
+    if finTime == -1
+        finTimeS = inf;
     end
-    
-    runTime = toc(timeA);
-  end
-  fprintf('\n check nr: %d \n runtime: %.2f h\n',counter,runTime/3600)
-  
+    timeA = tic;
+    runTime = 0;
+    myName = prod(double('RemoteRunner.m'));
+
+    originalDir = dir;
+    tmp = exist('Savings');
+
+    if tmp ~= 7
+        mkdir('Savings')
+    end
+
+    counter = 0;
+    while runTime < finTimeS
+        counter = counter+1;
+        fprintf('\n check nr: %d \n',counter)
+
+        pause(checkFreq)
+        clc
+
+        directory = dir;
+        nFiles = length(directory);
+        
+        for ii = 1:nFiles
+            try
+                disp(directory(ii).name)
+                if directory(ii).isdir == 0 ...
+                        && prod(double(directory(ii).name)) ~= myName
+                    try
+                        if multipleruns
+                            run(directory(ii).name);
+                        elseif ~sum(strcmp(directory(ii).name, runnedFiles))
+                            run(directory(ii).name);
+                            runnedFiles{end+1} = directory(ii).name;
+                        end
+                    catch
+                        a = 1;
+                    end
+                end
+            catch
+                a = 2;
+            end
+            close all
+        end
+
+        runTime = toc(timeA);
+    end
+    fprintf('\n check nr: %d \n runtime: %.2f h\n',counter,runTime/3600)
+
 catch
-  fprintf('\n Failed to evalulate current script \n')
-  pause(5)
-  RemoteRunner
-  
+    fprintf('\n Failed to evalulate current script \n')
+    pause(5)
+    RemoteRunner
+
 end
